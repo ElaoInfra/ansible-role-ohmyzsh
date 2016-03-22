@@ -86,14 +86,43 @@ source $ZSH/oh-my-zsh.sh
 
 echo
 
-elao_php_xdebug () {
+elao_php_xdebug_all () {
     if [[ $1 == on ]]; then sudo rename -v 's/20-xdebug.ini.off/20-xdebug.ini/' /etc/php5/*/conf.d/20-xdebug.ini.off
     else sudo rename -v 's/20-xdebug.ini/20-xdebug.ini.off/' /etc/php5/*/conf.d/20-xdebug.ini; fi
     sudo service php5-fpm restart
 }
 
+elao_php_xdebug () {
+    if [[ -z ${1+x} ]]; then
+        echo "Argument can be on|off to switch all sapi or a sapi (cli, fpm, cgi…) to switch its state.";
+        return false;
+    fi
+
+    if [[ $1 == 'on' ]] || [[ $1 == 'off' ]]; then
+        elao_php_xdebug_all $1;
+        return true;
+    fi
+
+    if [[ ! -d "/etc/php5/$1" ]]; then
+        echo "The sapi $1 is not present";
+        return false;
+    fi
+
+    file="/etc/php5/$1/conf.d/20-xdebug.ini"
+    if [[ -f "$file" ]]
+    then
+        sudo mv "$file" "$file.off";
+        echo "Disabled Xdebug for $1";
+    else
+        sudo mv "$file.off" "$file";
+        echo "Enabled Xdebug for $1";
+    fi
+
+    sudo service php5-fpm restart
+}
+
 echo "- Enable/Disable php xdebug"
-echo "    elao_php_xdebug on|off"
+echo "    elao_php_xdebug on|off|cli|fpm|…"
 
 elao_nginx_timeout () {
     if [[ $1 == off ]]; then sudo sed -ri 's/fastcgi_read_timeout (.*);$/fastcgi_read_timeout 999s;#origin\1/' /etc/nginx/conf.d/php_fpm_params
