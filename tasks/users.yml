@@ -36,3 +36,5 @@
     name: "{{ item.user }}"
     shell: /bin/zsh
   with_items: "{{ elao_ohmyzsh_users }}"
+  become: true
+  become_method: sudo
